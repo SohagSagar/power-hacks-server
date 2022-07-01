@@ -1,14 +1,16 @@
 //DB_USER=power-hacks
 //DB_PASS=3XqtSWpZSJxA80nw
+
+//https://bloc-sorry-93997.herokuapp.com
+
+
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-
-
 const express = require('express');
-const app= express();
+const app = express();
 var jwt = require('jsonwebtoken');
 const cors = require('cors');
 require('dotenv').config();
-const port =process.env.PORT || 5000;
+const port = process.env.PORT || 5000;
 
 //middleware
 app.use(cors());
@@ -24,12 +26,9 @@ const verifyJWT = (req, res, next) => {
     if (!authHeader) {
         return res.status(401).send({ message: 'UnAuthorized access' });
     }
-    
     const token = authHeader.split(' ')[1];
-    console.log(token);
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
         if (err) {
-            
             return res.status(403).send({ message: 'forbidden access' })
         }
         req.decoded = decoded;
@@ -39,8 +38,8 @@ const verifyJWT = (req, res, next) => {
 }
 
 
-const run=async()=>{
-    try{
+const run = async () => {
+    try {
         await client.connect();
         console.log('db connected successfully');
         const userCollection = client.db('power-hacks').collection('users');
@@ -48,57 +47,49 @@ const run=async()=>{
 
 
 
-        app.get('/api/login/:data',async(req,res)=>{
-            const data=req.body;
-            console.log(data);
+        app.get('/api/login/:data', async (req, res) => {
+            const data = req.body;
         })
 
-        // app.post('/api/registration',async(req,res)=>{
-        //     const data = req.body;
-        //     console.log(data);
-        //     const result= await userCollection.insertOne(data);
-        //     res.send(result);
-        // })
 
+        app.get('/api/billing-list', verifyJWT, async (req, res) => {
 
-        app.get('/api/billing-list',verifyJWT,async(req,res)=>{
-
-            console.log('query',req.query);
-            const page= parseInt(req.query.page);
+            console.log('query', req.query);
+            const page = parseInt(req.query.page);
             const size = parseInt(req.query.size);
 
             let result;
-            if(page || size){
-                result= await billCollection.find().skip(page*size).limit(size).toArray();
-            }else{
-               result= await billCollection.find().toArray();
+            if (page || size) {
+                result = await billCollection.find().skip(page * size).limit(size).toArray();
+            } else {
+                result = await billCollection.find().toArray();
             }
 
-            
+
             res.send(result);
         })
 
-        app.get('/billCount',verifyJWT,async(req,res)=>{
+        app.get('/billCount', verifyJWT, async (req, res) => {
             const count = await billCollection.estimatedDocumentCount();
-            res.send({count});
+            res.send({ count });
         })
 
 
-        app.get('/paid-amount',verifyJWT,async(req,res)=>{
-            const result =await billCollection.find().project({paidAmount:1}).toArray();
+        app.get('/paid-amount', verifyJWT, async (req, res) => {
+            const result = await billCollection.find().project({ paidAmount: 1 }).toArray();
             res.send(result);
         })
 
-        app.post('/api/add-billing',async(req,res)=>{
+        app.post('/api/add-billing', async (req, res) => {
             const data = req.body;
             const result = await billCollection.insertOne(data);
             res.send(result);
 
         })
 
-        app.put('/users/:email',async(req,res)=>{
-            const email=req.params.email;
-            const userInfo= req.body;
+        app.put('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const userInfo = req.body;
             console.log(email);
             const filter = { email: email };
             const options = { upsert: true };
@@ -120,17 +111,18 @@ const run=async()=>{
         })
     }
 
-    finally{
+    finally {
 
     }
 }
 run().catch(console.dir);
-app.get('/',(res,req)=>{
+
+app.get('/', (res, req) => {
     res.send('running power hack server')
 });
 
-app.listen(port, ()=>{
-    console.log('power hacks server is listening at',port);
+app.listen(port, () => {
+    console.log('power hacks server is listening at', port);
 })
 
 
