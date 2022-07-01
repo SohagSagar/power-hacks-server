@@ -53,8 +53,6 @@ const run = async () => {
 
 
         app.get('/api/billing-list', verifyJWT, async (req, res) => {
-
-            console.log('query', req.query);
             const page = parseInt(req.query.page);
             const size = parseInt(req.query.size);
 
@@ -80,6 +78,14 @@ const run = async () => {
             res.send(result);
         })
 
+
+        app.get('/api/update-billing/:id',async(req,res)=>{
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const result= await billCollection.findOne(filter);
+            res.send(result);
+        })
+
         app.post('/api/add-billing', async (req, res) => {
             const data = req.body;
             const result = await billCollection.insertOne(data);
@@ -97,8 +103,21 @@ const run = async () => {
                 $set: userInfo
             };
             const result = await userCollection.updateOne(filter, updatedDoc, options);
-            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '24h' })
             res.send({ result, token });
+
+        })
+
+        app.put('/api/update-billing/:id',async(req,res)=>{
+            const id = req.params.id;
+            const userInfo = req.body;
+            const filter = { _id: ObjectId(id) }
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: userInfo
+            };
+            const result = await billCollection.updateOne(filter, updatedDoc, options);
+            res.send(result)
 
         })
 
